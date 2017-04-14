@@ -17,6 +17,8 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
 logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
 
 # Where to save our data
 LOD_PATHS = {
@@ -71,16 +73,16 @@ def lod_get():
     except FileNotFoundError:
         lateststatus = ''
 
-    logging.info('Latest status: ' + lateststatus)
-    logging.info('Got file name: ' + lod_title)
+    log.info('Latest status: ' + lateststatus)
+    log.info('Got file name: ' + lod_title)
 
     if str(lateststatus) == str(lod_title):
-        logging.info('We already have the latest data. Ciao!')
+        log.info('We already have the latest data. Ciao!')
         return  # exit the function
     else:
         with open('lod-latest', 'w') as status:
             status.write(lod_title)
-            logging.info('Downloading latest version: ' + lod_title)
+            log.info('Downloading latest version: ' + lod_title)
 
     # Downloading the addresses might take a few minutes.
     # In the meanwile, shake your wrists and correct your posture.
@@ -89,7 +91,7 @@ def lod_get():
         r = requests.get(lod_targz, stream=True)
 
         if not r.ok:
-            logging.error('Something went wrong, time to write debug code')
+            log.error('Something went wrong, time to write debug code')
 
         for block in r.iter_content(chunk_size=8192):
             handle_tar.write(block)
@@ -107,12 +109,12 @@ def lod_get():
                     os.path.abspath(
                         LOD_PATHS['data'])):
                     tar.extractall(path=LOD_PATHS['data'], members=[member])
-                    logging.info('Yay, extracted ' + member.name)
+                    log.info('Yay, extracted ' + member.name)
                     lod_split(LOD_PATHS['data'] + member.name)
                 else:
-                    logging.error('Unsafe filename found in LOD dump!')
+                    log.error('Unsafe filename found in LOD dump!')
             else:
-                logging.info('Not extracting ' + member.name)
+                log.info('Not extracting ' + member.name)
 
 
 def lod_split(path):
@@ -128,7 +130,7 @@ def lod_split(path):
         if elem.tag == '{lod}ITEM':
             meta = elem.find('{lod}META')
             lodid = meta.attrib['{lod}ID']
-            logging.info(lodid)
+            log.info(lodid)
 
             # Remove "VERSIOUN" attribute to prevent useless future commits
             # None is to not raise an exception if VERSIOUN does not exist
@@ -145,13 +147,7 @@ def lod_split(path):
                 # Prune audio from the tree
                 elem.remove(audio_tag)
             except AttributeError:
-                logging.info('No audio for ' + lodid)
-
-            # Prettify
-
-            rough_string = ET.tostring(elem, encoding="UTF-8").strip()
-            reparsed = minidom.parseString(rough_string)
-            content = reparsed.toprettyxml(indent="    ")
+                log.info('No audio for ' + lodid)
 
             with open(LOD_PATHS['xml'] + lodid + ".xml", 'wb') as f_xml:
                 # We need .encode() on strings because wb writes in bytes,
@@ -160,16 +156,16 @@ def lod_split(path):
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
                 f_xml.write(
                     "<lod:LOD xmlns:lod=\"http://www.lod.lu/\">\n".encode())
-                f_xml.write(content)
+                f_xml.write(prettify(elem))
                 f_xml.write("\n</lod:LOD>".encode())
 
 
 def prettify(elem):
     """Return a pretty-printed XML string for the Element.
     """
-    rough_string = ElementTree.tostring(elem, 'utf-8')
+    rough_string = ET.tostring(elem, 'utf-8')
     reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="  ")
+    return reparsed.toprettyxml(indent="    ")
 
 if __name__ == "__main__":
     lod_init()
