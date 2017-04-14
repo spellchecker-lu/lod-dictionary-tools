@@ -8,6 +8,7 @@ If there is a new version:
  - Parse it and split it into files
 """
 
+import argparse
 import base64
 import logging
 import os
@@ -16,7 +17,7 @@ import tarfile
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
@@ -122,21 +123,22 @@ def lod_split(path):
     Argument is the path to the file.
     Output is separate xml and mp3 files.
     """
+    log.debug('Splitting path '+path)
     context = ET.iterparse(path, events=('end',))
+    log.debug('Got context')
     ET.register_namespace('lod', 'http://www.lod.lu/')
-
     for event, elem in context:
-        if elem.tag == '{lod}ITEM':
-            meta = elem.find('{lod}META')
-            lodid = meta.attrib['{lod}ID']
+        if elem.tag == '{http://www.lod.lu/}ITEM':
+            meta = elem.find('{http://www.lod.lu/}META')
+            lodid = meta.attrib['{http://www.lod.lu/}ID']
             log.info(lodid)
 
             # Remove "VERSIOUN" attribute to prevent useless future commits
             # None is to not raise an exception if VERSIOUN does not exist
-            meta.attrib.pop('{lod}VERSIOUN', None)
+            meta.attrib.pop('{http://www.lod.lu/}VERSIOUN', None)
 
             # Extract the audio data
-            audio_tag = elem.find('{lod}AUDIO')
+            audio_tag = elem.find('{http://www.lod.lu/}AUDIO')
 
             try:
                 # decode it and write it to a file
@@ -155,16 +157,29 @@ def lod_split(path):
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
                 f_xml.write(
                     "<lod:LOD xmlns:lod=\"http://www.lod.lu/\">\n".encode())
-                f_xml.write(prettify(elem))
+                f_xml.write(ET.tostring(elem, 'utf-8'))
                 f_xml.write("\n</lod:LOD>".encode())
 
-
-def prettify(elem):
-    """Return a pretty-printed XML string for the Element."""
-    rough_string = ET.tostring(elem, 'utf-8')
-    reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="    ")
+def is_valid_source(parser, arg):
+    if not os.path.exists(arg):
+        parser.error(
+            "The input source {} does not exist".format(arg))
+    else:
+        return arg
 
 if __name__ == "__main__":
     lod_init()
-    lod_get()
+    parser = argparse.ArgumentParser(
+        description='Downloads and parses LOD dump. If a path is provided, that file is parsed instead.')
+    parser.add_argument(
+        'source',
+        metavar='source',
+        type=lambda x: is_valid_source(
+            parser,
+            x),
+        help='Input source file')
+    args = parser.parse_args()
+    if args.source:
+        lod_split(args.source)
+    else:
+        lod_get()
