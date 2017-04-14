@@ -85,7 +85,7 @@ def lod_get():
     # Downloading the addresses might take a few minutes.
     # In the meanwile, shake your wrists and correct your posture.
 
-    with open(LOD_PATHS['data'] + lod_title, 'wb+') as handle_tar:
+    with open(LOD_PATHS['data'] + lod_title, 'wb') as handle_tar:
         r = requests.get(lod_targz, stream=True)
 
         if not r.ok:
@@ -93,7 +93,7 @@ def lod_get():
 
         for block in r.iter_content(chunk_size=8192):
             handle_tar.write(block)
-    with open(LOD_PATHS['data'] + lod_title, 'rb+') as handle_tar:
+    with open(LOD_PATHS['data'] + lod_title, 'rb') as handle_tar:
         # Open tarfile
         tar = tarfile.open(fileobj=handle_tar, mode="r")
 
