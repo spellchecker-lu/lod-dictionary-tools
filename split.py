@@ -32,11 +32,12 @@ for event, elem in context:
 
         # Extract the audio data, decode it and write it to a file
         audio_tag = elem.find('lod:AUDIO', ns)
-        audio_content = audio_tag.text
-        if audio_content:
-            audio_data = base64.b64decode(audio_content)
-            with open(audioFilename, 'wb') as f_mp3:
-                f_mp3.write(audio_data)
+        if audio_tag is not None:
+            audio_content = audio_tag.text
+            if audio_content:
+                audio_data = base64.b64decode(audio_content)
+                with open(audioFilename, 'wb') as f_mp3:
+                    f_mp3.write(audio_data)
 
         # Replace the "ns" namespace with the original name
         # FIXME: Find a better way to do that namespaces
