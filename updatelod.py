@@ -13,8 +13,8 @@ import logging
 import os
 import requests
 import tarfile
-import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import xml.etree.ElementTree as ET
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -29,22 +29,20 @@ LOD_PATHS = {
 
 
 def lod_init():
-    """
-    Central place for janitorial tasks
-    """
-    # Make sure our directories exist
+    """Create directories if they don't exist."""
     for path in LOD_PATHS.values():
         if not os.path.exists(path):
             os.makedirs(path)
 
 
 def lod_get():
-    """
+    """Gets processable lod dump
+
     Downloads lod data if there is a new version.
     Calls the lod_split if a new version is downloaded.
     """
     # The API endpoint that contains the link to the most recent version of the
-    # addresses in all available formats (geojson, but also shp).
+    # lod in all available formats (currently only one huge xml in a tar.gz.).
     udata_lod = 'https://data.public.lu/api/1/datasets/letzebuerger-online-dictionnaire-raw-data/'
 
     # Eugh, magic numbers.
@@ -84,7 +82,7 @@ def lod_get():
             status.write(lod_title)
             log.info('Downloading latest version: ' + lod_title)
 
-    # Downloading the addresses might take a few minutes.
+    # Downloading the dictionary might take a few minutes.
     # In the meanwile, shake your wrists and correct your posture.
 
     with open(LOD_PATHS['data'] + lod_title, 'wb') as handle_tar:
@@ -118,7 +116,8 @@ def lod_get():
 
 
 def lod_split(path):
-    """
+    """Processes lod dump
+
     Parses and splits a gigantic lod xml file.
     Argument is the path to the file.
     Output is separate xml and mp3 files.
@@ -161,8 +160,7 @@ def lod_split(path):
 
 
 def prettify(elem):
-    """Return a pretty-printed XML string for the Element.
-    """
+    """Return a pretty-printed XML string for the Element."""
     rough_string = ET.tostring(elem, 'utf-8')
     reparsed = minidom.parseString(rough_string)
     return reparsed.toprettyxml(indent="    ")
