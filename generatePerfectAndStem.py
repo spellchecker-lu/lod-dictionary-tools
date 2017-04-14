@@ -8,7 +8,7 @@ etree.register_namespace('lod', 'http://www.lod.lu')
 
 perfectAndStemList = []
 
-fileList = glob.glob("XML/*.xml")
+fileList = glob.glob("lod-dictionary-mirror/XML/*.xml")
 
 def generatePerfectAndStemCSV():
     for file in fileList:
