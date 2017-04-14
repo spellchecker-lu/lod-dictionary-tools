@@ -2,56 +2,54 @@
 
 import xml.etree.ElementTree as ET
 import os
-import re
 import base64
+import logging
 
-xmlDirectory = 'lod-dictionary-mirror/XML'
-audioDirectory = 'lod-audio-mirror/MP3'
 
-if not os.path.exists(xmlDirectory):
-    os.makedirs(xmlDirectory)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-if not os.path.exists(audioDirectory):
-    os.makedirs(audioDirectory)
+LOD_PATHS['xml'] = 'lod-dictionary-mirror/XML'
+LOD_PATHS['audio'] = 'lod-audio-mirror/MP3'
 
-ns = {'lod': 'http://www.lod.lu/'}
+if not os.path.exists(LOD_PATHS['xml']):
+    os.makedirs(LOD_PATHS['xml'])
 
-ET.register_namespace('lod', 'http://www.lod.lu')
+if not os.path.exists(LOD_PATHS['audio']):
+    os.makedirs(LOD_PATHS['audio'])
 
 context = ET.iterparse('2017-04-13-lod-opendata.xml', events=('end',))
+
+ET.register_namespace('lod', 'http://www.lod.lu/')
+
 for event, elem in context:
     if elem.tag == '{http://www.lod.lu/}ITEM':
-        print elem.find('lod:META', ns).attrib
+        meta = elem.find('{http://www.lod.lu/}META')
+        lodid = meta.attrib['{http://www.lod.lu/}ID']
+        logger.info(lodid)
 
-        id = elem.find('lod:META', ns).attrib['{http://www.lod.lu/}ID']
+        # Remove the "VERSIOUN" attribute to prevent unnecessary future commits
+        # None is to not raise an exception if VERSIOUN does not exist
+        meta.attrib.pop('{http://www.lod.lu/}VERSIOUN', None)
 
-        xmlFilename = xmlDirectory + '/' + format(id + ".xml")
-        audioFilename = audioDirectory + '/' + format(id + ".mp3")
+        xmlFilename = LOD_PATHS['xml'] + '/' + lodid + ".xml"
+        audioFilename = LOD_PATHS['audio'] + '/' + lodid + ".mp3"
 
-        content = ET.tostring(elem)
+        # Extract the audio data
+        audio_tag = elem.find('{http://www.lod.lu/}AUDIO')
 
-        # Extract the audio data, decode it and write it to a file
-        audio_tag = elem.find('lod:AUDIO', ns)
-        if audio_tag is not None:
-            audio_content = audio_tag.text
-            if audio_content:
-                audio_data = base64.b64decode(audio_content)
-                with open(audioFilename, 'wb') as f_mp3:
-                    f_mp3.write(audio_data)
-
-        # Replace the "ns" namespace with the original name
-        # FIXME: Find a better way to do that namespaces
-        content = content.replace("ns0:", "lod:")
-        content = content.replace(' xmlns:ns0="http://www.lod.lu/"', "")
-
-        # Remove the "VERSIOUN" attribute to prevent unnecessary commits with future updates
-        content = re.sub(r' lod:VERSIOUN="[^"]+"', '', content)
-
-        # Remove the audio data
-        content = re.sub(r'<lod:AUDIO.+</lod:AUDIO>\n', '', content, 0, re.DOTALL)
+        try:
+            # decode it and write it to a file
+            audio_data = base64.b64decode(audio_tag.text)
+            with open(audioFilename, 'wb') as f_mp3:
+                f_mp3.write(audio_data)
+            # Prune audio from the tree
+            elem.remove(audio_tag)
+        except AttributeError:
+            logger.info('No audio for '+lodid)
 
         with open(xmlFilename, 'wb') as f:
             f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
             f.write("<lod:LOD xmlns:lod=\"http://www.lod.lu/\">\n")
-            f.write(content.strip())
+            f.write(ET.tostring(elem).strip())
             f.write("\n</lod:LOD>")
