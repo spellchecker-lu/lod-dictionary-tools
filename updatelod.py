@@ -14,6 +14,7 @@ import os
 import requests
 import tarfile
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
 
 logging.basicConfig(level=logging.INFO)
 
@@ -146,6 +147,12 @@ def lod_split(path):
             except AttributeError:
                 logging.info('No audio for ' + lodid)
 
+            # Prettify
+
+            rough_string = ET.tostring(elem, encoding="UTF-8").strip()
+            reparsed = minidom.parseString(rough_string)
+            content = reparsed.toprettyxml(indent="    ")
+
             with open(LOD_PATHS['xml'] + lodid + ".xml", 'wb') as f_xml:
                 # We need .encode() on strings because wb writes in bytes,
                 # because ET.tostring returns bytes.
@@ -153,9 +160,16 @@ def lod_split(path):
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
                 f_xml.write(
                     "<lod:LOD xmlns:lod=\"http://www.lod.lu/\">\n".encode())
-                f_xml.write(ET.tostring(elem, encoding="UTF-8").strip())
+                f_xml.write(content)
                 f_xml.write("\n</lod:LOD>".encode())
 
+
+def prettify(elem):
+    """Return a pretty-printed XML string for the Element.
+    """
+    rough_string = ElementTree.tostring(elem, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
 
 if __name__ == "__main__":
     lod_init()
