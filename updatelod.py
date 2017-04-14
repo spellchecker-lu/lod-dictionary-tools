@@ -131,7 +131,7 @@ def lod_split(path):
         if elem.tag == '{http://www.lod.lu/}ITEM':
             meta = elem.find('{http://www.lod.lu/}META')
             lodid = meta.attrib['{http://www.lod.lu/}ID']
-            log.info(lodid)
+            log.debug(lodid)
 
             # Remove "VERSIOUN" attribute to prevent useless future commits
             # None is to not raise an exception if VERSIOUN does not exist
