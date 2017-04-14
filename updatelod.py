@@ -125,17 +125,17 @@ def lod_split(path):
     ET.register_namespace('lod', 'http://www.lod.lu/')
 
     for event, elem in context:
-        if elem.tag == '{http://www.lod.lu/}ITEM':
-            meta = elem.find('{http://www.lod.lu/}META')
-            lodid = meta.attrib['{http://www.lod.lu/}ID']
+        if elem.tag == '{lod}ITEM':
+            meta = elem.find('{lod}META')
+            lodid = meta.attrib['{lod}ID']
             logging.info(lodid)
 
             # Remove "VERSIOUN" attribute to prevent useless future commits
             # None is to not raise an exception if VERSIOUN does not exist
-            meta.attrib.pop('{http://www.lod.lu/}VERSIOUN', None)
+            meta.attrib.pop('{lod}VERSIOUN', None)
 
             # Extract the audio data
-            audio_tag = elem.find('{http://www.lod.lu/}AUDIO')
+            audio_tag = elem.find('{lod}AUDIO')
 
             try:
                 # decode it and write it to a file
