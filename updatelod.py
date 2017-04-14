@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO)
 # Where to save our data
 LOD_PATHS = {
     'data': 'data/',
-    'xml': 'lod-dictionary-mirror/XML',
-    'audio': 'lod-audio-mirror/MP3'
+    'xml': 'lod-dictionary-mirror/XML/',
+    'audio': 'lod-audio-mirror/MP3/'
 }
 
 
@@ -129,12 +129,9 @@ def lod_split(path):
             lodid = meta.attrib['{http://www.lod.lu/}ID']
             logging.info(lodid)
 
-            # Remove the "VERSIOUN" attribute to prevent unnecessary future commits
+            # Remove "VERSIOUN" attribute to prevent useless future commits
             # None is to not raise an exception if VERSIOUN does not exist
             meta.attrib.pop('{http://www.lod.lu/}VERSIOUN', None)
-
-            xml_filename = LOD_PATHS['xml'] + '/' + lodid + ".xml"
-            audio_filename = LOD_PATHS['audio'] + '/' + lodid + ".mp3"
 
             # Extract the audio data
             audio_tag = elem.find('{http://www.lod.lu/}AUDIO')
@@ -142,16 +139,16 @@ def lod_split(path):
             try:
                 # decode it and write it to a file
                 audio_data = base64.b64decode(audio_tag.text)
-                with open(audio_filename, 'wb') as f_mp3:
+                with open(LOD_PATHS['audio'] + lodid + ".mp3", 'wb') as f_mp3:
                     f_mp3.write(audio_data)
                 # Prune audio from the tree
                 elem.remove(audio_tag)
             except AttributeError:
                 logging.info('No audio for ' + lodid)
 
-            with open(xml_filename, 'wb') as f_xml:
-                # We need .encode() on strings because wb writes in bytes because
-                # ET.tostring returns bytes.
+            with open(LOD_PATHS['xml'] + lodid + ".xml", 'wb') as f_xml:
+                # We need .encode() on strings because wb writes in bytes,
+                # because ET.tostring returns bytes.
                 f_xml.write(
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
                 f_xml.write(
