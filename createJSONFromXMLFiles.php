@@ -32,25 +32,43 @@ foreach (new DirectoryIterator($folder) as $i => $fileInfo) {
     $pos            = '';
     $microstructure = $xml->ITEM[0]->ARTICLE[0]->MICROSTRUCTURE[0];
     if ($microstructure) {
-        $msTypeSubst   = $microstructure->{'MS-TYPE-SUBST'}[0];
-        $msTypeVrb     = $microstructure->{'MS-TYPE-VRB'}[0];
-        $msTypeAdj     = $microstructure->{'MS-TYPE-ADJ'}[0];
-        $msTypePrep    = $microstructure->{'MS-TYPE-PREP'}[0];
-        $msTypeAdv     = $microstructure->{'MS-TYPE-ADV'}[0];
-        $msTypePronAdv = $microstructure->{'MS-TYPE-PRONADV'}[0];
+        $msTypeAdj      = $microstructure->{'MS-TYPE-ADJ'}[0];
+        $msTypeAdv      = $microstructure->{'MS-TYPE-ADV'}[0];
+        $msTypeArt      = $microstructure->{'MS-TYPE-ART'}[0];
+        $msTypeConj     = $microstructure->{'MS-TYPE-CONJ'}[0];
+        $msTypeEComp    = $microstructure->{'MS-TYPE-ELEM-COMP'}[0];
+        $msTypePart     = $microstructure->{'MS-TYPE-PART'}[0];
+        $msTypePrep     = $microstructure->{'MS-TYPE-PREP'}[0];
+        $msTypePrepPArt = $microstructure->{'MS-TYPE-PREP-plus-ART'}[0];
+        $msTypePron     = $microstructure->{'MS-TYPE-PRON'}[0];
+        $msTypePronAdv  = $microstructure->{'MS-TYPE-PRONADV'}[0];
+        $msTypeSubst    = $microstructure->{'MS-TYPE-SUBST'}[0];
+        $msTypeVrb      = $microstructure->{'MS-TYPE-VRB'}[0];
 
-        if ($msTypeSubst) {
+        if ($msTypeAdj) {
+            $pos = 'ADJ';
+        } elseif ($msTypeAdv) {
+            $pos = 'ADV';
+        } elseif ($msTypeArt) {
+            $pos = 'ART';
+        } elseif ($msTypeConj) {
+            $pos = 'CONJ';
+        } elseif ($msTypeEComp) {
+            $pos = 'ECOMP';
+        } elseif ($msTypePart) {
+            $pos = 'PART';
+        } elseif ($msTypePrep) {
+            $pos = 'PREP';
+        } elseif ($msTypePrepPArt) {
+            $pos = 'PREPPART';
+        } elseif ($msTypePron) {
+            $pos = 'PRON';
+        } elseif ($msTypePronAdv) {
+            $pos = 'PRONADV';
+        } elseif ($msTypeSubst) {
             $pos = 'SUBST';
         } elseif ($msTypeVrb) {
             $pos = 'VRB';
-        } elseif ($msTypeAdj) {
-            $pos = 'ADJ';
-        } elseif ($msTypePrep) {
-            $pos = 'PREP';
-        } elseif ($msTypeAdv) {
-            $pos = 'ADV';
-        } elseif ($msTypePronAdv) {
-            $pos = 'PRONADV';
         } else {
             echo 'UNKNOWN POS: ' . $lemma . ' ' . $msTypeSubst . "\n";
             $pos = '??';
