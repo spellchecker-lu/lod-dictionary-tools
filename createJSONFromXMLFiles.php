@@ -21,6 +21,10 @@ foreach (new DirectoryIterator($folder) as $i => $fileInfo) {
 
     $data = [];
 
+    $id = $xml->ITEM[0]->META['ID'];
+
+    $data['id'] = (string)$id;
+
     $lemma = $xml->ITEM[0]->ARTICLE[0]->{'ITEM-ADRESSE'}[0];
 
     $data['lemma'] = (string)$lemma;
