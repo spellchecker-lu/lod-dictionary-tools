@@ -14,8 +14,7 @@ import logging
 import os
 import requests
 import tarfile
-from xml.dom import minidom
-import xml.etree.ElementTree as ET
+from lxml import etree
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -124,9 +123,9 @@ def lod_split(path):
     Output is separate xml and mp3 files.
     """
     log.debug('Splitting path '+path)
-    context = ET.iterparse(path, events=('end',))
+    context = etree.iterparse(path, events=('end',), remove_blank_text=True)
     log.debug('Got context')
-    ET.register_namespace('lod', 'http://www.lod.lu/')
+    etree.register_namespace('lod', 'http://www.lod.lu/')
     for event, elem in context:
         if elem.tag == '{http://www.lod.lu/}ITEM':
             meta = elem.find('{http://www.lod.lu/}META')
@@ -151,15 +150,16 @@ def lod_split(path):
                 log.info('No audio for ' + lodid)
 
             # Wrap the <lod:ITEM> into an <lod:LOD> element
-            xmlRoot = ET.Element('lod:LOD')
+            xmlRoot = etree.Element('{http://www.lod.lu/}LOD')
             xmlRoot.insert(0, elem)
 
             with open(LOD_PATHS['xml'] + lodid + ".xml", 'wb') as f_xml:
                 # We need .encode() on strings because wb writes in bytes,
-                # because ET.tostring returns bytes.
+                # because etree.tostring returns bytes.
+                # etree.tostring could add the XML declaration as well, but it uses single quotes and I'm picky (Michel)
                 f_xml.write(
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
-                f_xml.write(ET.tostring(xmlRoot, 'utf-8'))
+                f_xml.write(etree.tostring(xmlRoot, encoding='utf-8', pretty_print=True))
 
 def is_valid_source(parser, arg):
     if not os.path.exists(arg):
