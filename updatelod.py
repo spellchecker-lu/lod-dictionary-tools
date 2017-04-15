@@ -150,15 +150,16 @@ def lod_split(path):
             except AttributeError:
                 log.info('No audio for ' + lodid)
 
+            # Wrap the <lod:ITEM> into an <lod:LOD> element
+            xmlRoot = ET.Element('lod:LOD')
+            xmlRoot.insert(0, elem)
+
             with open(LOD_PATHS['xml'] + lodid + ".xml", 'wb') as f_xml:
                 # We need .encode() on strings because wb writes in bytes,
                 # because ET.tostring returns bytes.
                 f_xml.write(
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode())
-                f_xml.write(
-                    "<lod:LOD xmlns:lod=\"http://www.lod.lu/\">\n".encode())
-                f_xml.write(ET.tostring(elem, 'utf-8'))
-                f_xml.write("\n</lod:LOD>".encode())
+                f_xml.write(ET.tostring(xmlRoot, 'utf-8'))
 
 def is_valid_source(parser, arg):
     if not os.path.exists(arg):
