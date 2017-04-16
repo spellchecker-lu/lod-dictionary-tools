@@ -1,28 +1,30 @@
 #!/usr/bin/env python
-
-import xml.etree.ElementTree as etree
+from xmltodict import parse, unparse
 import glob
 import csv
-
-etree.register_namespace('lod', 'http://www.lod.lu')
+import logging
 
 perfectAndStemList = []
 
-fileList = glob.glob("lod-dictionary-mirror/XML/*.xml")
+fileList = glob.glob("XML/*.xml")
 
 def generatePerfectAndStemCSV():
-    for file in fileList:
-        tree = etree.parse(file)
-        root = tree.getroot()
-        for child in root:
-            verbOrNot = child[1][1][0][0].tag
-            if verbOrNot == "{http://www.lod.lu/}CAT-GRAM-VRB":
-                stem = child[1][0].text
-                perfect = child[1][1][0][2].text
-                if len(perfect.strip()) > 0:
+    for path in fileList:
+        xml = open(path, "r")
+        org_xml = xml.read()
+        d = parse(org_xml, force_list={'lod:MS-TYPE-VRB': True})
+        try:
+            if d['lod:LOD']['lod:ITEM']['lod:ARTICLE']['lod:MICROSTRUCTURE']['lod:MS-TYPE-VRB'][0]:
+                stem = d['lod:LOD']['lod:ITEM']['lod:ARTICLE']['lod:ITEM-ADRESSE']['#text']
+                perfect = d['lod:LOD']['lod:ITEM']['lod:ARTICLE']['lod:MICROSTRUCTURE']['lod:MS-TYPE-VRB'][0]['lod:PARTICIPE-PASSE']
+                if not isinstance(perfect, str):
+                    for onePerfect in perfect:
+                        perfectAndStemList.append([onePerfect, stem])
+                else:
                     perfectAndStemList.append([perfect, stem])
-
-    if perfectAndStemList :
+        except KeyError:
+            pass
+    if perfectAndStemList:
         with open('perfectAndStem.csv', 'w') as myfile:
             writer = csv.writer(myfile)
             writer.writerows(perfectAndStemList)
