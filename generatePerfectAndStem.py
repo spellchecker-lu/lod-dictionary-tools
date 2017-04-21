@@ -6,7 +6,7 @@ import logging
 
 perfectAndStemList = []
 
-fileList = glob.glob("XML/*.xml")
+fileList = glob.glob("lod-dictionary-mirror/XML/*")
 
 def generatePerfectAndStemCSV():
     for path in fileList:
