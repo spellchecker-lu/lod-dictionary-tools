@@ -173,7 +173,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Downloads and parses LOD dump. If a path is provided, that file is parsed instead.')
     parser.add_argument(
-        'source',
+        '--source',
         metavar='source',
         type=lambda x: is_valid_source(
             parser,
