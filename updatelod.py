@@ -47,7 +47,7 @@ def lod_get():
 
     # Eugh, magic numbers.
     # This is just the uuid for the addresses in csv format.
-    udata_lod_id = 'aa81fad1-1163-443f-9ed1-1270132812ad'
+    udata_lod_id = '484513c9-fdf4-49d0-a63a-caf82e04d8fa'
 
     # Udata has no permalink. Parse the API to get the latest geojson.
     udata_json = requests.get(udata_lod).json()
