@@ -43,11 +43,11 @@ def lod_get():
     """
     # The API endpoint that contains the link to the most recent version of the
     # lod in all available formats (currently only one huge xml in a tar.gz.).
-    udata_lod = 'https://data.public.lu/api/1/datasets/letzebuerger-online-dictionnaire-raw-data/'
+    udata_lod = 'https://data.public.lu/api/1/datasets/letzebuerger-online-dictionnaire/'
 
     # Eugh, magic numbers.
     # This is just the uuid for the addresses in csv format.
-    udata_lod_id = '484513c9-fdf4-49d0-a63a-caf82e04d8fa'
+    udata_lod_id = '0bc322f0-96ad-4c45-ae92-d6154247824c'
 
     # Udata has no permalink. Parse the API to get the latest geojson.
     udata_json = requests.get(udata_lod).json()
@@ -56,7 +56,7 @@ def lod_get():
     # i.e. our addresses
     for resource in udata_json['resources']:
         if resource['id'] == udata_lod_id:
-            lod_targz = resource['url']
+            downloaded_file = resource['url']
             lod_title = resource['title']
             break
     else:
@@ -83,36 +83,41 @@ def lod_get():
             log.info('Downloading latest version: ' + lod_title)
 
     # Downloading the dictionary might take a few minutes.
-    # In the meanwile, shake your wrists and correct your posture.
+    # In the meanwhile, shake your wrists and correct your posture.
 
-    with open(LOD_PATHS['data'] + lod_title, 'wb') as handle_tar:
-        r = requests.get(lod_targz, stream=True)
+    with open(LOD_PATHS['data'] + lod_title, 'wb') as handle_downloaded_file:
+        r = requests.get(downloaded_file, stream=True)
 
         if not r.ok:
             log.error('Something went wrong, time to write debug code')
 
         for block in r.iter_content(chunk_size=8192):
-            handle_tar.write(block)
-    with open(LOD_PATHS['data'] + lod_title, 'rb') as handle_tar:
-        # Open tarfile
-        tar = tarfile.open(fileobj=handle_tar, mode="r")
+            handle_downloaded_file.write(block)
 
-        for member in tar.getmembers():
-            if member.name.endswith('-lod-opendata.xml'):
-                # Safety check for .. or / in path
-                if os.path.abspath(
-                    os.path.join(
-                        LOD_PATHS['data'],
-                        member.name)).startswith(
-                    os.path.abspath(
-                        LOD_PATHS['data'])):
-                    tar.extractall(path=LOD_PATHS['data'], members=[member])
-                    log.info('Yay, extracted ' + member.name)
-                    lod_split(LOD_PATHS['data'] + member.name)
+    if downloaded_file.endswith('-lod-opendata.tar.gz'):
+        with open(LOD_PATHS['data'] + lod_title, 'rb') as handle_downloaded_file:
+            # Open tarfile
+            tar = tarfile.open(fileobj=handle_downloaded_file, mode="r")
+
+            for member in tar.getmembers():
+                if member.name.endswith('-lod-opendata.xml'):
+                    # Safety check for .. or / in path
+                    if os.path.abspath(
+                        os.path.join(
+                            LOD_PATHS['data'],
+                            member.name)).startswith(
+                        os.path.abspath(
+                            LOD_PATHS['data'])):
+                        tar.extractall(path=LOD_PATHS['data'], members=[member])
+                        log.info('Yay, extracted ' + member.name)
+                        lod_split(LOD_PATHS['data'] + member.name)
+                    else:
+                        log.error('Unsafe filename found in LOD dump!')
                 else:
-                    log.error('Unsafe filename found in LOD dump!')
-            else:
-                log.info('Not extracting ' + member.name)
+                    log.info('Not extracting ' + member.name)
+    else:
+        if downloaded_file.endswith('-lod-opendata.xml'):
+            lod_split(handle_downloaded_file.name)
 
 
 def lod_split(path):
